@@ -26,11 +26,11 @@
               </div>
               <div class="mb-3">
                 <label class="form-label">Down Payment (DP) %</label>
-                <input type="number" class="form-control" id="dp" placeholder="Contoh: 20">
+                <input type="number" class="form-control" id="dpPercent" placeholder="Contoh: 20">
               </div>
               <div class="mb-3">
-                <label class="form-label">Tenor (dalam tahun, contoh: 1 untuk 12 bulan)</label>
-                <input type="number" class="form-control" id="tenor_tahun" placeholder="Contoh: 1.5" step="0.1">
+                <label class="form-label">Tenor (dalam tahun, contoh: 1.5 untuk 18 bulan)</label>
+                <input type="number" class="form-control" id="tenorTahun" placeholder="Contoh: 1.5" step="0.1">
               </div>
               <button type="button" class="btn btn-primary w-100" onclick="hitungAngsuran()">Hitung Angsuran</button>
             </form>
@@ -44,46 +44,39 @@
   <script>
     function hitungAngsuran() {
       const client = document.getElementById('client').value.trim();
-      const otr = document.getElementById('otr').value.trim();
-      const dp = document.getElementById('dp').value.trim();
-      const tenor = document.getElementById('tenor_tahun').value.trim();
+      const otr = parseFloat(document.getElementById("otr").value);
+      const dpPercent = parseFloat(document.getElementById("dpPercent").value);
+      const tenorTahun = parseFloat(document.getElementById("tenorTahun").value);
 
-      if (!client) {
-        alert("Nama klien wajib diisi!");
-        return;
-      }
-      if (!otr) {
-        alert("Harga mobil (OTR) wajib diisi!");
-        return;
-      }
-      if (!dp) {
-        alert("DP (dalam %) wajib diisi!");
-        return;
-      }
-      if (!tenor) {
-        alert("Tenor (dalam tahun) wajib diisi!");
-        return;
-      }
-
-      const otrVal = parseFloat(otr);
-      const dpVal = parseFloat(dp);
-      const tenorTahun = parseFloat(tenor);
-
-      if (isNaN(otrVal) || isNaN(dpVal) || isNaN(tenorTahun) || tenorTahun <= 0) {
-        alert("Semua nilai harus berupa angka dan tenor harus lebih dari 0.");
+      if (!client || isNaN(otr) || isNaN(dpPercent) || isNaN(tenorTahun) || tenorTahun <= 0) {
+        alert("Pastikan semua data diisi dengan benar!");
         return;
       }
 
       const tenorBulan = Math.round(tenorTahun * 12);
-      const dpValue = otrVal * (dpVal / 100);
-      const sisaKredit = otrVal - dpValue;
-      const angsuranPerBulan = Math.round(sisaKredit / tenorBulan);
+      const dp = otr * (dpPercent / 100);
+      const pokokUtang = otr - dp;
+
+      let bunga = 0;
+      if (tenorBulan <= 12) {
+        bunga = 0.12;
+      } else if (tenorBulan <= 24) {
+        bunga = 0.14;
+      } else {
+        bunga = 0.165;
+      }
+
+      const totalBunga = pokokUtang * bunga;
+      const totalHutang = pokokUtang + totalBunga;
+      const angsuranPerBulan = totalHutang / tenorBulan;
 
       const hasil = `
         <strong>Hasil Simulasi Kredit untuk ${client}:</strong><br>
-        • Harga Mobil (OTR): <strong>Rp ${otrVal.toLocaleString('id-ID')}</strong><br>
-        • Down Payment (${dpVal}%): Rp ${dpValue.toLocaleString('id-ID')}<br>
-        • Sisa Kredit: Rp ${sisaKredit.toLocaleString('id-ID')}<br>
+        • Harga Mobil (OTR): <strong>Rp ${otr.toLocaleString('id-ID')}</strong><br>
+        • Down Payment (${dpPercent}%): Rp ${dp.toLocaleString('id-ID')}<br>
+        • Pokok Utang: Rp ${pokokUtang.toLocaleString('id-ID')}<br>
+        • Bunga (${(bunga * 100).toFixed(1)}%): Rp ${totalBunga.toLocaleString('id-ID')}<br>
+        • Total Hutang: Rp ${totalHutang.toLocaleString('id-ID')}<br>
         • Tenor: ${tenorTahun} tahun (${tenorBulan} bulan)<br>
         • <strong>Angsuran per Bulan: Rp ${angsuranPerBulan.toLocaleString('id-ID')}</strong>
       `;
