@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Simulasi Kredit IMS - Pak Sugus</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h2 {
+      color: #333;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    input {
+      padding: 6px;
+      width: 250px;
+      margin-top: 5px;
+    }
+    button {
+      margin-top: 15px;
+      padding: 8px 16px;
+    }
+    .result {
+      margin-top: 25px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 6px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Simulasi Kredit Mobil - Pak Sugus</h2>
+
+  <label>OTR (Harga Mobil)</label>
+  <input type="number" id="otr" value="240000000" />
+
+  <label>DP (%)</label>
+  <input type="number" id="dpPercent" value="20" />
+
+  <label>Jangka Waktu (bulan)</label>
+  <input type="number" id="jangkaWaktu" value="18" />
+
+  <label>Tanggal Perhitungan (YYYY-MM-DD)</label>
+  <input type="date" id="tanggalCek" value="2024-08-14" />
+
+  <button onclick="hitung()">Hitung Angsuran</button>
+
+  <div class="result" id="output"></div>
+
+  <script>
+    function hitung() {
+      const otr = parseFloat(document.getElementById('otr').value);
+      const dpPercent = parseFloat(document.getElementById('dpPercent').value);
+      const jangkaWaktu = parseInt(document.getElementById('jangkaWaktu').value);
+      const tanggalCek = new Date(document.getElementById('tanggalCek').value);
+
+      const dp = otr * dpPercent / 100;
+      const pokokUtang = otr - dp;
+
+      let bunga = 0;
+      if (jangkaWaktu <= 12) bunga = 0.12;
+      else if (jangkaWaktu <= 24) bunga = 0.14;
+      else bunga = 0.165;
+
+      const angsuranPerBulan = (pokokUtang + pokokUtang * bunga) / jangkaWaktu;
+
+      const jadwal = [
+        "2024-01-25", "2024-02-25", "2024-03-25", "2024-04-25",
+        "2024-05-25", "2024-06-25", "2024-07-25", "2024-08-25",
+        "2024-09-25", "2024-10-25", "2024-11-25", "2024-12-25"
+      ];
+
+      const angsuranJadwal = 12907000;
+      let totalJatuhTempo = 0;
+      let dendaList = [];
+
+      jadwal.forEach((tanggalStr, index) => {
+        const tanggalJatuhTempo = new Date(tanggalStr);
+        if (tanggalJatuhTempo <= tanggalCek) {
+          totalJatuhTempo += angsuranJadwal;
+          if (index + 1 > 5) {
+            const hariTelat = Math.floor((tanggalCek - tanggalJatuhTempo) / (1000 * 60 * 60 * 24));
+            if (hariTelat > 0) {
+              const denda = hariTelat * 0.001 * angsuranJadwal;
+              dendaList.push({
+                no: index + 1,
+                hari: hariTelat,
+                total: denda
+              });
+            }
+          }
+        }
+      });
+
+      let output = `
+        <strong>Nama Klien:</strong> SUGUS <br>
+        <strong>OTR:</strong> Rp${otr.toLocaleString()} <br>
+        <strong>DP:</strong> Rp${dp.toLocaleString()} (${dpPercent}%)<br>
+        <strong>Pokok Utang:</strong> Rp${pokokUtang.toLocaleString()} <br>
+        <strong>Bunga:</strong> ${(bunga * 100).toFixed(1)}% <br>
+        <strong>Jangka Waktu:</strong> ${jangkaWaktu} bulan<br>
+        <strong>Angsuran Per Bulan:</strong> Rp${Math.round(angsuranPerBulan).toLocaleString()}<br><br>
+        <strong>Total Angsuran Jatuh Tempo (s.d ${tanggalCek.toISOString().split('T')[0]}):</strong> Rp${totalJatuhTempo.toLocaleString()}<br><br>
+        <strong>Denda Keterlambatan:</strong><br>
+      `;
+
+      if (dendaList.length === 0) {
+        output += `Tidak ada keterlambatan.`;
+      } else {
+        output += `<ul>`;
+        dendaList.forEach(item => {
+          output += `<li>Angsuran ke-${item.no}: ${item.hari} hari → Denda Rp${item.total.toLocaleString()}</li>`;
+        });
+        const totalDenda = dendaList.reduce((sum, d) => sum + d.total, 0);
+        output += `</ul><strong>Total Denda:</strong> Rp${totalDenda.toLocaleString()}`;
+      }
+
+      document.getElementById('output').innerHTML = output;
+    }
+  </script>
+
+</body>
+</html>
